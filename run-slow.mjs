@@ -6,7 +6,8 @@
 import {Worker} from 'node:worker_threads';
 
 const interval = setInterval(() => {
-    console.log('THREAD main roda a cada 1s', new Date().toLocaleTimeString());
+    console.log('THREAD main roda a QUEUE cada 1s', new Date().toLocaleTimeString());
+    processQueue();
 }, 1000);
 
 const taskQueue = [];
@@ -16,13 +17,10 @@ const worker = new Worker('./slow-worker.mjs');
 function runSlow(number) {
     return new Promise((resolve, reject) => {
         taskQueue.push({number, resolve, reject})
-        console.log(`task ${number} adicionada na fila`, taskQueue.length);
-        processQueue();
     });
 }
 
 function processQueue() {
-
     if (isProcessing || taskQueue.length === 0) {
         return;
     }
@@ -36,14 +34,12 @@ function processQueue() {
         console.log(`THREAD main recebeu: ${message}`);
         resolve(message);
         isProcessing = false;
-        processQueue();
     });
 
     worker.once('error', (error) => {
         console.error(error);
         reject(error);
         isProcessing = false;
-        processQueue();
     });
 }
 
